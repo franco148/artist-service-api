@@ -48,6 +48,9 @@ public class OpenApiConfig {
     @Value("${api.info.dev-url}")
     private String apiDevServerUrl;
 
+    @Value("${api.info.docker-url}")
+    private String apiDockerServerUrl;
+
     @Bean
     public OpenAPI api() {
 
@@ -55,9 +58,13 @@ public class OpenApiConfig {
         devServer.setUrl(apiDevServerUrl);
         devServer.setDescription("Server URL in Development environment");
 
+        Server dockerServer = new Server();
+        dockerServer.setUrl(apiDockerServerUrl);
+        dockerServer.setDescription("Server URL in Docker environment");
+
         return new OpenAPI()
                 .info(apiInfo())
-                .servers(List.of(devServer));
+                .servers(List.of(devServer, dockerServer));
     }
 
     private Info apiInfo() {
