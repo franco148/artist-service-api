@@ -5,7 +5,7 @@ import com.francofral.artistapi.domain.Album;
 import com.francofral.artistapi.domain.Artist;
 import com.francofral.artistapi.dto.AlbumDto;
 import com.francofral.artistapi.dto.AlbumDtoWrapper;
-import com.francofral.artistapi.dto.ArtistDto;
+import com.francofral.artistapi.problem.EntityNotFoundException;
 import com.francofral.artistapi.repository.AlbumRepository;
 import com.francofral.artistapi.repository.ArtistRepository;
 import com.francofral.artistapi.service.mapper.AlbumDtoToEntityMapper;
@@ -30,9 +30,9 @@ class AlbumService {
     private final AlbumEntityToDtoMapper albumEntityToDtoMapper;
     private final ArtistDtoToEntityMapper artistDtoToEntityMapper;
 
-    public List<AlbumDto> retrieveAlbumsByArtistIdAndSave(Long artistId, ArtistDto artistDto) {
+    public List<AlbumDto> retrieveAlbumsByArtistIdAndSave(Long artistId) {
 
-        List<Album> artistAlbums = albumRepository.findAllByArtistId(artistDto.id());
+        List<Album> artistAlbums = albumRepository.findAllByArtistId(artistId);
         if (!artistAlbums.isEmpty()) {
             return artistAlbums.stream()
                     .map(albumEntityToDtoMapper)
@@ -40,7 +40,7 @@ class AlbumService {
         }
 
         List<AlbumDto> albumDtoList = fetchArtistAlbums(artistId);
-        saveAlbums(albumDtoList, artistDto.id());
+        saveAlbums(albumDtoList, artistId);
 
         return albumDtoList;
     }
