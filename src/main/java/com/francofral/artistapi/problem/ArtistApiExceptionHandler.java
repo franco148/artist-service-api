@@ -17,10 +17,34 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.util.stream.Collectors;
 
+/**
+ * A global exception handler for the Artist API. This class extends {@link ResponseEntityExceptionHandler}
+ * and provides custom handling of specific exceptions related to the API.
+ *
+ * <p>This class is responsible for converting exceptions into structured error responses,
+ * conforming to the {@link ErrorResponse} schema.</p>
+ *
+ * <p>Supported Exception Types:</p>
+ * <ul>
+ *   <li>{@link ArtistApiDomainException} - Custom domain exceptions annotated with {@link ExceptionHandlerSchema}.</li>
+ *   <li>{@link MethodArgumentNotValidException} - Validation errors for request bodies.</li>
+ * </ul>
+ */
 @Slf4j
 @ControllerAdvice
 public final class ArtistApiExceptionHandler extends ResponseEntityExceptionHandler {
 
+    /**
+     * Handles exceptions of type {@link ArtistApiDomainException}.
+     *
+     * <p>This method validates the presence of the {@link ExceptionHandlerSchema} annotation,
+     * extracts the HTTP status and title information from the exception or its annotation, and
+     * builds a structured {@link ErrorResponse} for the client.</p>
+     *
+     * @param exception The {@link ArtistApiDomainException} to handle.
+     * @param request   The {@link WebRequest} associated with the exception.
+     * @return A {@link ResponseEntity} containing an {@link ErrorResponse} with the appropriate HTTP status and details.
+     */
     @ExceptionHandler(ArtistApiDomainException.class)
     public ResponseEntity<Problem> handleDomainException(ArtistApiDomainException exception, WebRequest request) {
         ExceptionHandlerSchema exceptionHandler = AnnotationUtils.findAnnotation(exception.getClass(), ExceptionHandlerSchema.class);
@@ -42,6 +66,15 @@ public final class ArtistApiExceptionHandler extends ResponseEntityExceptionHand
         return ResponseEntity.status(status).body(errorResponse);
     }
 
+    /**
+     * Handles validation errors caused by invalid method arguments.
+     *
+     * @param ex      The {@link MethodArgumentNotValidException} containing details of the validation error.
+     * @param headers HTTP headers.
+     * @param status  The HTTP status code.
+     * @param request The {@link WebRequest} associated with the exception.
+     * @return A {@link ResponseEntity} containing an {@link ErrorResponse} with details about the validation failure.
+     */
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
                                                                   HttpHeaders headers,
@@ -69,6 +102,13 @@ public final class ArtistApiExceptionHandler extends ResponseEntityExceptionHand
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+    /**
+     * Validates the presence and correctness of the {@link ExceptionHandlerSchema} annotation on the exception class.
+     *
+     * @param exception       The {@link ArtistApiDomainException} to validate.
+     * @param exceptionHandler The {@link ExceptionHandlerSchema} annotation associated with the exception class.
+     * @throws UnsupportedOperationException If the annotation is missing or contains invalid values.
+     */
     private void validateException(ArtistApiDomainException exception, ExceptionHandlerSchema exceptionHandler) {
         if (!(exception instanceof DefaultDomainException) && null == exceptionHandler) {
             log.error("The problem class does not have @ExceptionHandlerSchema annotation.");
@@ -85,6 +125,13 @@ public final class ArtistApiExceptionHandler extends ResponseEntityExceptionHand
         }
     }
 
+    /**
+     * Extracts the HTTP status code from the {@link ArtistApiDomainException} or its {@link ExceptionHandlerSchema} annotation.
+     *
+     * @param exception       The {@link ArtistApiDomainException} to extract the status from.
+     * @param exceptionHandler The {@link ExceptionHandlerSchema} annotation associated with the exception class.
+     * @return The HTTP status code to be returned in the response.
+     */
     private int getStatus(ArtistApiDomainException exception, ExceptionHandlerSchema exceptionHandler) {
         int response;
 
@@ -97,6 +144,13 @@ public final class ArtistApiExceptionHandler extends ResponseEntityExceptionHand
         return response;
     }
 
+    /**
+     * Extracts the title of the error from the {@link ArtistApiDomainException} or its {@link ExceptionHandlerSchema} annotation.
+     *
+     * @param exception       The {@link ArtistApiDomainException} to extract the title from.
+     * @param exceptionHandler The {@link ExceptionHandlerSchema} annotation associated with the exception class.
+     * @return The title of the error to be returned in the response.
+     */
     private String getTitle(ArtistApiDomainException exception, ExceptionHandlerSchema exceptionHandler) {
         String titleResponse;
 

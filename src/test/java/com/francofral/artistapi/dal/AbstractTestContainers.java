@@ -18,7 +18,7 @@ public abstract class AbstractTestContainers {
     @Container
     protected static final PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:alpine")
             .withDatabaseName("artist-test-db")
-            .withUsername("fullstack")
+            .withUsername("testuser")
             .withPassword("password");
 
     @DynamicPropertySource
@@ -32,9 +32,9 @@ public abstract class AbstractTestContainers {
     static void beforeAll() {
         Flyway flyway = Flyway.configure()
                 .dataSource(
-                        postgreSQLContainer.getJdbcUrl(),
-                        postgreSQLContainer.getUsername(),
-                        postgreSQLContainer.getPassword()
+                    postgreSQLContainer.getJdbcUrl(),
+                    postgreSQLContainer.getUsername(),
+                    postgreSQLContainer.getPassword()
                 ).load();
 
         flyway.migrate();
@@ -48,10 +48,6 @@ public abstract class AbstractTestContainers {
                 .password(postgreSQLContainer.getPassword())
                 .build();
     }
-
-//    protected static JdbcTemplate getJdbcTemplate() {
-//        return new JdbcTemplate(getDataSource());
-//    }
 
     protected static Faker FAKER = new Faker();
 }

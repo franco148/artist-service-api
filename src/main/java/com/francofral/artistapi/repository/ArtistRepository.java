@@ -2,7 +2,6 @@ package com.francofral.artistapi.repository;
 
 import com.francofral.artistapi.domain.Artist;
 import com.francofral.artistapi.dto.ArtistComparisonDto;
-import jakarta.persistence.SqlResultSetMapping;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
