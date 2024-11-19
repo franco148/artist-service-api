@@ -17,6 +17,7 @@ public final class ArtistDtoToEntityMapper implements Function<ArtistDto, Artist
         artist.setId(artistDto.id());
         artist.setName(artistDto.name());
         artist.setProfile(artistDto.profile());
+        artist.setGenre(artistDto.genre());
 
         return artist;
     }

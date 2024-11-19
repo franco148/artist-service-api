@@ -25,6 +25,9 @@ public class Artist {
 
     private String profile;
 
+    @Column(length = 20)
+    private String genre;
+
     @Override
     public final boolean equals(Object obj) {
         if (this == obj) return true;

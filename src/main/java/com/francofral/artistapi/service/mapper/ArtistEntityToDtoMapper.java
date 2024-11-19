@@ -12,6 +12,6 @@ public final class ArtistEntityToDtoMapper implements Function<Artist, ArtistDto
 
     @Override
     public ArtistDto apply(Artist artist) {
-        return new ArtistDto(artist.getId(), artist.getName(), artist.getProfile(), new ArrayList<>());
+        return new ArtistDto(artist.getId(), artist.getName(), artist.getProfile(), artist.getGenre(), new ArrayList<>());
     }
 }
