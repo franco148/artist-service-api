@@ -6,5 +6,9 @@ public abstract class ArtistApiDomainException extends RuntimeException {
         super(cause);
     }
 
+    protected ArtistApiDomainException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
     protected abstract String getExceptionDetails();
 }

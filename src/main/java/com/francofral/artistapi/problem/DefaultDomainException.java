@@ -2,7 +2,7 @@ package com.francofral.artistapi.problem;
 
 import org.springframework.http.HttpStatus;
 
-public class DefaultDomainException extends ArtistApiDomainException {
+public final class DefaultDomainException extends ArtistApiDomainException {
 
     public static final String TITLE = "The process cannot continue";
 
@@ -14,7 +14,7 @@ public class DefaultDomainException extends ArtistApiDomainException {
     }
 
     public DefaultDomainException(HttpStatus status, String message, Throwable cause) {
-        super(cause);
+        super(message, cause);
 
         this.status = status;
         this.errorMessage = message;
