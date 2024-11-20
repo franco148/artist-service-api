@@ -46,6 +46,7 @@ about artists and their respective albums can be obtained.
 > | 262221    | The zombies |
 > | 108713    | Nickelback  |
 > | 103906    | Bit Shifter |
+> 
 > Then for testing you can use those IDs in the requests to the endpoint mentioned above.
 > 
 > **Wait! I just realized that now requests with multiple IDs are working. Apparently service drops from time to time.**
