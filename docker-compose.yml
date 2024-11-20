@@ -1,0 +1,41 @@
+version: '3.3'
+
+services:
+  postgres-docker:
+    container_name: postgres-docker-db
+    image: postgres:alpine
+    environment:
+      POSTGRES_USER: demouserdb
+      POSTGRES_PASSWORD: password01!
+      POSTGRES_DB: artistsdb
+      PGDATA: /data/postgres
+    volumes:
+      - postgres-docker-vol:/data/postgres
+    ports:
+      - "25432:5432"
+    networks:
+      - postgres-docker-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U demouserdb" ]
+      interval: 10s
+      retries: 5
+
+  artist-service:
+    image: franco148/demos-artist-service-api:latest
+    container_name: artist-service
+    ports:
+      - "9191:9191"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - postgres-docker-network
+    depends_on:
+      - postgres-docker
+
+networks:
+  postgres-docker-network:
+    driver: bridge
+
+volumes:
+  postgres-docker-vol:

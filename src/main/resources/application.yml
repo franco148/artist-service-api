@@ -10,6 +10,8 @@ spring:
       maximum-pool-size: 10
       minimum-idle: 5
       idle-timeout: 30000
+      max-lifetime: 60000
+      connection-timeout: 30000
   jpa:
     hibernate:
       ddl-auto: validate
@@ -26,6 +28,7 @@ spring:
 server:
   error:
     include-message: always
+  port: 8181
 
 logging:
   level:
@@ -36,12 +39,6 @@ logging:
         descriptor:
           sql:
             BasicBinder: trace
-
-cors:
-  allowed-origins: "*"
-  allowed-methods: "*"
-  allowed-headers: "*"
-  exposed-headers: "*"
 
 artist:
   resource:
