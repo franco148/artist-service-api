@@ -5,8 +5,8 @@ import com.francofral.artistapi.domain.Album;
 import com.francofral.artistapi.domain.Artist;
 import com.francofral.artistapi.dto.AlbumDto;
 import com.francofral.artistapi.dto.AlbumDtoWrapper;
-import com.francofral.artistapi.dto.ArtistDto;
 import com.francofral.artistapi.problem.EntityNotFoundException;
+import com.francofral.artistapi.problem.ResourceNotFoundException;
 import com.francofral.artistapi.repository.AlbumRepository;
 import com.francofral.artistapi.repository.ArtistRepository;
 import com.francofral.artistapi.service.mapper.AlbumDtoToEntityMapper;
@@ -82,7 +82,7 @@ class AlbumServiceTest {
         // THEN
         assertAll(
             () -> then(albumRepository).should().findAllByArtistId(anyLong()),
-            () -> then(artistSearchClient).should(never()).getArtistAlbums(anyLong()),
+            () -> then(artistSearchClient).should(never()).fetchAlbumsForArtist(anyLong()),
             () -> then(artistRepository).should(never()).findById(anyLong()),
             () -> then(albumRepository).should(never()).saveAll(anyList()),
             () -> assertThat(actual).usingRecursiveComparison().ignoringCollectionOrder().isEqualTo(expectedList)
@@ -94,7 +94,7 @@ class AlbumServiceTest {
     void throwsExceptionWhenArtistNotFound() {
         // GIVEN
         given(albumRepository.findAllByArtistId(anyLong())).willReturn(Collections.emptyList());
-        given(artistSearchClient.getArtistAlbums(anyLong())).willReturn(getAlbumDtoWrapper());
+        given(artistSearchClient.fetchAlbumsForArtist(anyLong())).willReturn(Optional.of(getAlbumDtoWrapper()));
         given(artistRepository.findById(anyLong())).willReturn(Optional.empty());
 
         // WHEN
@@ -109,19 +109,44 @@ class AlbumServiceTest {
                     .isInstanceOf(EntityNotFoundException.class)
                     .hasMessage(ENTITY_NOT_FOUND_TEMPLATE_MESSAGE, Artist.class.getSimpleName(), 100L),
             () -> then(albumRepository).should().findAllByArtistId(anyLong()),
-            () -> then(artistSearchClient).should().getArtistAlbums(anyLong()),
+            () -> then(artistSearchClient).should().fetchAlbumsForArtist(anyLong()),
             () -> then(artistRepository).should().findById(anyLong()),
             () -> then(albumRepository).should(never()).saveAll(anyList())
         );
     }
 
-//    @Test
+    @Test
+    @DisplayName("ResourceNotFoundException is thrown when the resource is not found in the third party API")
+    void throwsExceptionWhenResourceIsNotFound() {
+        // GIVEN
+        given(albumRepository.findAllByArtistId(anyLong())).willReturn(Collections.emptyList());
+        given(artistSearchClient.fetchAlbumsForArtist(anyLong())).willReturn(Optional.empty());
+
+        // WHEN
+        RuntimeException thrownException = assertThrows(
+                ResourceNotFoundException.class,
+                () -> underTest.retrieveAlbumsByArtistIdAndSave(100L)
+        );
+
+        // THEN
+        assertAll(
+            () -> assertThat(thrownException)
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessage(String.format("Albums for artist with ID=%s couldn't be found", 100L)),
+            () -> then(albumRepository).should().findAllByArtistId(anyLong()),
+            () -> then(artistSearchClient).should().fetchAlbumsForArtist(anyLong()),
+            () -> then(artistRepository).should(never()).findById(anyLong()),
+            () -> then(albumRepository).should(never()).saveAll(anyList())
+        );
+    }
+
+    @Test
     @DisplayName("Fetches albums information from third party API when it is not found in the database")
     void fetchAlbumsFromThirdPartyApiWhenItDoesNotExistInTheDatabase() {
         // GIVEN
         List<Album> expectedList = getAlbumEntities();
         given(albumRepository.findAllByArtistId(anyLong())).willReturn(Collections.emptyList());
-        given(artistSearchClient.getArtistAlbums(anyLong())).willReturn(getAlbumDtoWrapper());
+        given(artistSearchClient.fetchAlbumsForArtist(anyLong())).willReturn(Optional.of(getAlbumDtoWrapper()));
         given(artistRepository.findById(anyLong())).willReturn(Optional.of(getArtistEntity()));
 
         // WHEN
@@ -134,9 +159,12 @@ class AlbumServiceTest {
 
         assertAll(
             () -> then(albumRepository).should().findAllByArtistId(anyLong()),
-            () -> then(artistSearchClient).should().getArtistAlbums(anyLong()),
+            () -> then(artistSearchClient).should().fetchAlbumsForArtist(anyLong()),
             () -> then(artistRepository).should().findById(anyLong()),
-            () -> assertThat(capturedAlbums).usingRecursiveComparison().ignoringCollectionOrder().isEqualTo(expectedList)
+            () -> assertThat(capturedAlbums)
+                    .usingRecursiveComparison()
+                    .ignoringFields("artist")
+                    .ignoringCollectionOrder().isEqualTo(expectedList)
         );
     }
 

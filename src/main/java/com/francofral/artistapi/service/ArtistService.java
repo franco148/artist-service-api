@@ -3,6 +3,7 @@ package com.francofral.artistapi.service;
 import com.francofral.artistapi.client.ArtistSearchClient;
 import com.francofral.artistapi.domain.Artist;
 import com.francofral.artistapi.dto.ArtistDto;
+import com.francofral.artistapi.problem.ResourceNotFoundException;
 import com.francofral.artistapi.repository.ArtistRepository;
 import com.francofral.artistapi.service.mapper.ArtistDtoToEntityMapper;
 import com.francofral.artistapi.service.mapper.ArtistEntityToDtoMapper;
@@ -33,7 +34,10 @@ class ArtistService {
 
     private ArtistDto fetchArtist(Long artistId) {
         log.info("Fetching artist with ID: {}", artistId);
-        ArtistDto artistDto = artistSearchClient.getArtistById(artistId);
+
+        ArtistDto artistDto = artistSearchClient.fetchArtistById(artistId)
+                .orElseThrow(() -> new ResourceNotFoundException(String.format("Artist with ID=%s couldn't be found", artistId)));
+
         log.info("Successfully retrieved artist: {}", artistDto);
 
         return artistDto;

@@ -3,6 +3,7 @@ package com.francofral.artistapi.service;
 import com.francofral.artistapi.client.ArtistSearchClient;
 import com.francofral.artistapi.domain.Artist;
 import com.francofral.artistapi.dto.ArtistDto;
+import com.francofral.artistapi.problem.ResourceNotFoundException;
 import com.francofral.artistapi.repository.ArtistRepository;
 import com.francofral.artistapi.service.mapper.AlbumDtoToEntityMapper;
 import com.francofral.artistapi.service.mapper.AlbumEntityToDtoMapper;
@@ -65,7 +66,7 @@ class ArtistServiceTest {
         // THEN
         assertAll(
             () -> assertThat(actual).isEqualTo(expected),
-            () -> then(artistSearchClient).should(never()).getArtistById(anyLong()),
+            () -> then(artistSearchClient).should(never()).fetchArtistById(anyLong()),
             () -> then(artistRepository).should(never()).save(any(Artist.class))
         );
     }
@@ -77,7 +78,7 @@ class ArtistServiceTest {
         ArtistDto expected = artistEntityToDtoMapper.apply(getArtistEntity());
         given(artistRepository.findById(anyLong())).willReturn(Optional.empty());
         given(artistRepository.save(any(Artist.class))).willReturn(getArtistEntity());
-        given(artistSearchClient.getArtistById(anyLong())).willReturn(expected);
+        given(artistSearchClient.fetchArtistById(anyLong())).willReturn(Optional.of(expected));
 
         // WHEN
         ArtistDto actual = underTest.retrieveArtist(100L);
@@ -89,10 +90,34 @@ class ArtistServiceTest {
 
         assertAll(
             () -> then(artistRepository).should(atLeastOnce()).findById(anyLong()),
-            () -> then(artistSearchClient).should(atLeastOnce()).getArtistById(anyLong()),
+            () -> then(artistSearchClient).should(atLeastOnce()).fetchArtistById(anyLong()),
             () -> assertThat(capturedArtist.getId()).isEqualTo(expected.id()),
             () -> assertThat(capturedArtist.getName()).isEqualTo(expected.name()),
             () -> assertThat(capturedArtist.getProfile()).isEqualTo(expected.profile())
+        );
+    }
+
+    @Test
+    @DisplayName("ResourceNotFoundException is thrown when the resource is not found in the third party API")
+    void throwsExceptionWhenResourceIsNotFound() {
+        // GIVEN
+        given(artistRepository.findById(anyLong())).willReturn(Optional.empty());
+        given(artistSearchClient.fetchArtistById(anyLong())).willReturn(Optional.empty());
+
+        // WHEN
+        RuntimeException thrownException = assertThrows(
+            ResourceNotFoundException.class,
+            () -> underTest.retrieveArtist(100L)
+        );
+
+        // THEN
+        assertAll(
+            () -> assertThat(thrownException)
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessage(String.format("Artist with ID=%s couldn't be found", 100L)),
+            () -> then(artistRepository).should(atLeastOnce()).findById(anyLong()),
+            () -> then(artistSearchClient).should(atLeastOnce()).fetchArtistById(anyLong()),
+            () -> then(artistRepository).should(never()).save(any(Artist.class))
         );
     }
 

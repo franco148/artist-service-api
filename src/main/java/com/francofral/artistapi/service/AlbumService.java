@@ -6,6 +6,7 @@ import com.francofral.artistapi.domain.Artist;
 import com.francofral.artistapi.dto.AlbumDto;
 import com.francofral.artistapi.dto.AlbumDtoWrapper;
 import com.francofral.artistapi.problem.EntityNotFoundException;
+import com.francofral.artistapi.problem.ResourceNotFoundException;
 import com.francofral.artistapi.repository.AlbumRepository;
 import com.francofral.artistapi.repository.ArtistRepository;
 import com.francofral.artistapi.service.mapper.AlbumDtoToEntityMapper;
@@ -39,15 +40,18 @@ class AlbumService {
                     .collect(Collectors.toList());
         }
 
-        List<AlbumDto> albumDtoList = fetchArtistAlbums(artistId);
+        List<AlbumDto> albumDtoList = fetchAlbumsForArtist(artistId);
         saveAlbums(albumDtoList, artistId);
 
         return albumDtoList;
     }
 
-    private List<AlbumDto> fetchArtistAlbums(Long artistId) {
+    private List<AlbumDto> fetchAlbumsForArtist(Long artistId) {
         log.info("Fetching artist albums for artist ID: {}", artistId);
-        AlbumDtoWrapper albumDtoWrapper = artistSearchClient.getArtistAlbums(artistId);
+
+        AlbumDtoWrapper albumDtoWrapper = artistSearchClient.fetchAlbumsForArtist(artistId)
+                .orElseThrow(() -> new ResourceNotFoundException(String.format("Albums for artist with ID=%s couldn't be found", artistId)));
+
         log.info("Successfully fetched artist albums. {} albums for artist with ID: {}",
                 albumDtoWrapper.albums().size(),
                 artistId);

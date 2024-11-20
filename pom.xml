@@ -203,7 +203,6 @@
                         <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                         <includes>
                             <include>**/*IntegrationTest.java</include>
-                            <include>**/*IT.java</include>
                         </includes>
                         <systemPropertyVariables>
                             <test.server.port>${tomcat.http.port}</test.server.port>
@@ -296,7 +295,7 @@
                                         <limit>
                                             <counter>COMPLEXITY</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.10</minimum>
+                                            <minimum>0.80</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
