@@ -1,5 +1,8 @@
 package com.francofral.artistapi.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.francofral.artistapi.client.ArtistSearchClient;
 import com.francofral.artistapi.domain.Album;
 import com.francofral.artistapi.domain.Artist;
@@ -11,8 +14,7 @@ import com.francofral.artistapi.repository.AlbumRepository;
 import com.francofral.artistapi.repository.ArtistRepository;
 import com.francofral.artistapi.service.mapper.AlbumDtoToEntityMapper;
 import com.francofral.artistapi.service.mapper.AlbumEntityToDtoMapper;
-import com.francofral.artistapi.service.mapper.ArtistDtoToEntityMapper;
-import com.francofral.artistapi.service.mapper.ArtistEntityToDtoMapper;
+import com.francofral.artistapi.service.mapper.DiscogsAlbumMappingStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,8 +42,7 @@ class AlbumServiceTest {
 
     private static final String ENTITY_NOT_FOUND_TEMPLATE_MESSAGE = "%s with id %s could not be found or it does not exist.";
 
-    private final ArtistDtoToEntityMapper artistDtoToEntityMapper = new ArtistDtoToEntityMapper();
-    private final ArtistEntityToDtoMapper artistEntityToDtoMapper = new ArtistEntityToDtoMapper();
+    private final DiscogsAlbumMappingStrategy albumMapper = new DiscogsAlbumMappingStrategy();
     private final AlbumEntityToDtoMapper albumEntityToDtoMapper = new AlbumEntityToDtoMapper();
     private final AlbumDtoToEntityMapper albumDtoToEntityMapper = new AlbumDtoToEntityMapper();
 
@@ -61,9 +62,9 @@ class AlbumServiceTest {
                 artistSearchClient,
                 artistRepository,
                 albumRepository,
+                albumMapper,
                 albumDtoToEntityMapper,
-                albumEntityToDtoMapper,
-                artistDtoToEntityMapper
+                albumEntityToDtoMapper
         );
     }
 
@@ -91,10 +92,10 @@ class AlbumServiceTest {
 
     @Test
     @DisplayName("EntityNotFoundException is thrown when artist is not found")
-    void throwsExceptionWhenArtistNotFound() {
+    void throwsExceptionWhenArtistNotFound() throws JsonProcessingException {
         // GIVEN
         given(albumRepository.findAllByArtistId(anyLong())).willReturn(Collections.emptyList());
-        given(artistSearchClient.fetchAlbumsForArtist(anyLong())).willReturn(Optional.of(getAlbumDtoWrapper()));
+        given(artistSearchClient.fetchAlbumsForArtist(anyLong())).willReturn(getAlbumsNode());
         given(artistRepository.findById(anyLong())).willReturn(Optional.empty());
 
         // WHEN
@@ -120,7 +121,7 @@ class AlbumServiceTest {
     void throwsExceptionWhenResourceIsNotFound() {
         // GIVEN
         given(albumRepository.findAllByArtistId(anyLong())).willReturn(Collections.emptyList());
-        given(artistSearchClient.fetchAlbumsForArtist(anyLong())).willReturn(Optional.empty());
+        given(artistSearchClient.fetchAlbumsForArtist(anyLong())).willReturn(null);
 
         // WHEN
         RuntimeException thrownException = assertThrows(
@@ -142,11 +143,11 @@ class AlbumServiceTest {
 
     @Test
     @DisplayName("Fetches albums information from third party API when it is not found in the database")
-    void fetchAlbumsFromThirdPartyApiWhenItDoesNotExistInTheDatabase() {
+    void fetchAlbumsFromThirdPartyApiWhenItDoesNotExistInTheDatabase() throws JsonProcessingException {
         // GIVEN
         List<Album> expectedList = getAlbumEntities();
         given(albumRepository.findAllByArtistId(anyLong())).willReturn(Collections.emptyList());
-        given(artistSearchClient.fetchAlbumsForArtist(anyLong())).willReturn(Optional.of(getAlbumDtoWrapper()));
+        given(artistSearchClient.fetchAlbumsForArtist(anyLong())).willReturn(getAlbumsNode());
         given(artistRepository.findById(anyLong())).willReturn(Optional.of(getArtistEntity()));
 
         // WHEN
@@ -197,5 +198,24 @@ class AlbumServiceTest {
                 .toList();
 
         return new AlbumDtoWrapper(albumDtos);
+    }
+
+    private JsonNode getAlbumsNode() throws JsonProcessingException {
+        return new ObjectMapper().readTree("""
+                {
+                    "releases": [
+                        {
+                            "id": 201,
+                            "title": "Album 1",
+                            "releaseYear": 1997
+                        },
+                        {
+                            "id": 202,
+                            "title": "Album 2",
+                            "releaseYear": 2011
+                        }
+                    ]
+                }
+                """);
     }
 }

@@ -1,5 +1,6 @@
 package com.francofral.artistapi.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.francofral.artistapi.client.ArtistSearchClient;
 import com.francofral.artistapi.domain.Artist;
 import com.francofral.artistapi.dto.ArtistDto;
@@ -7,9 +8,12 @@ import com.francofral.artistapi.problem.ResourceNotFoundException;
 import com.francofral.artistapi.repository.ArtistRepository;
 import com.francofral.artistapi.service.mapper.ArtistDtoToEntityMapper;
 import com.francofral.artistapi.service.mapper.ArtistEntityToDtoMapper;
-import lombok.AllArgsConstructor;
+import com.francofral.artistapi.service.mapper.JsonMappingStrategy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+
+import java.util.stream.Stream;
 
 /**
  * Service class responsible for managing artist data.
@@ -23,14 +27,27 @@ import org.springframework.stereotype.Service;
  * This class ensures traceable and reliable artist retrieval and persistence workflows.
  */
 @Slf4j
-@AllArgsConstructor
 @Service
 class ArtistService {
 
     private final ArtistSearchClient artistSearchClient;
     private final ArtistRepository artistRepository;
+    private final JsonMappingStrategy<JsonNode, ArtistDto> artistMapper;
     private final ArtistDtoToEntityMapper artistDtoToEntityMapper;
     private final ArtistEntityToDtoMapper artistEntityToDtoMapper;
+
+    public ArtistService(ArtistSearchClient artistSearchClient,
+                         ArtistRepository artistRepository,
+                         @Qualifier("discogsArtistMapper") JsonMappingStrategy<JsonNode, ArtistDto> artistMapper,
+                         ArtistDtoToEntityMapper artistDtoToEntityMapper,
+                         ArtistEntityToDtoMapper artistEntityToDtoMapper) {
+
+        this.artistSearchClient = artistSearchClient;
+        this.artistRepository = artistRepository;
+        this.artistMapper = artistMapper;
+        this.artistDtoToEntityMapper = artistDtoToEntityMapper;
+        this.artistEntityToDtoMapper = artistEntityToDtoMapper;
+    }
 
     /**
      * Retrieves an artist by ID from the database. If the artist is not found locally,
@@ -65,7 +82,10 @@ class ArtistService {
     private ArtistDto fetchArtist(Long artistId) {
         log.info("START - Fetching artist with ID: {} from external service.", artistId);
 
-        ArtistDto artistDto = artistSearchClient.fetchArtistById(artistId)
+        JsonNode artistNode = artistSearchClient.fetchArtistById(artistId);
+        ArtistDto artistDto = Stream.of(artistNode)
+                .map(artistMapper)
+                .findFirst()
                 .orElseThrow(() -> {
                     log.error("ERROR - Artist with ID: {} not found in external service.", artistId);
                     return new ResourceNotFoundException(String.format("Artist with ID=%s couldn't be found", artistId));

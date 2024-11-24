@@ -1,14 +1,16 @@
 package com.francofral.artistapi.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.francofral.artistapi.client.ArtistSearchClient;
 import com.francofral.artistapi.domain.Artist;
 import com.francofral.artistapi.dto.ArtistDto;
 import com.francofral.artistapi.problem.ResourceNotFoundException;
 import com.francofral.artistapi.repository.ArtistRepository;
-import com.francofral.artistapi.service.mapper.AlbumDtoToEntityMapper;
-import com.francofral.artistapi.service.mapper.AlbumEntityToDtoMapper;
 import com.francofral.artistapi.service.mapper.ArtistDtoToEntityMapper;
 import com.francofral.artistapi.service.mapper.ArtistEntityToDtoMapper;
+import com.francofral.artistapi.service.mapper.DiscogsArtistMappingStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,10 +37,9 @@ class ArtistServiceTest {
 
     private static final String ENTITY_NOT_FOUND_TEMPLATE_MESSAGE = "%s with id %s could not be found or it does not exist.";
 
+    private final DiscogsArtistMappingStrategy artistMapper = new DiscogsArtistMappingStrategy();
     private final ArtistEntityToDtoMapper artistEntityToDtoMapper = new ArtistEntityToDtoMapper();
     private final ArtistDtoToEntityMapper artistDtoToEntityMapper = new ArtistDtoToEntityMapper();
-    private final AlbumEntityToDtoMapper albumEntityToDtoMapper = new AlbumEntityToDtoMapper();
-    private final AlbumDtoToEntityMapper albumDtoToEntityMapper = new AlbumDtoToEntityMapper();
 
     private ArtistService underTest;
 
@@ -50,7 +51,7 @@ class ArtistServiceTest {
     @BeforeEach
     void setUp() {
         this.underTest = new ArtistService(
-                artistSearchClient, artistRepository, artistDtoToEntityMapper, artistEntityToDtoMapper);
+                artistSearchClient, artistRepository, artistMapper, artistDtoToEntityMapper, artistEntityToDtoMapper);
     }
 
     @Test
@@ -73,12 +74,12 @@ class ArtistServiceTest {
 
     @Test
     @DisplayName("Fetches artist information from third party API when it is not found in the database")
-    void fetchArtistsFromThirdPartyApiWhenItDoesNotExistInTheDatabase() {
+    void fetchArtistsFromThirdPartyApiWhenItDoesNotExistInTheDatabase() throws JsonProcessingException {
         // GIVEN
         ArtistDto expected = artistEntityToDtoMapper.apply(getArtistEntity());
         given(artistRepository.findById(anyLong())).willReturn(Optional.empty());
         given(artistRepository.save(any(Artist.class))).willReturn(getArtistEntity());
-        given(artistSearchClient.fetchArtistById(anyLong())).willReturn(Optional.of(expected));
+        given(artistSearchClient.fetchArtistById(anyLong())).willReturn(getArtistNode());
 
         // WHEN
         ArtistDto actual = underTest.retrieveArtist(100L);
@@ -102,7 +103,7 @@ class ArtistServiceTest {
     void throwsExceptionWhenResourceIsNotFound() {
         // GIVEN
         given(artistRepository.findById(anyLong())).willReturn(Optional.empty());
-        given(artistSearchClient.fetchArtistById(anyLong())).willReturn(Optional.empty());
+        given(artistSearchClient.fetchArtistById(anyLong())).willReturn(null);
 
         // WHEN
         RuntimeException thrownException = assertThrows(
@@ -131,4 +132,14 @@ class ArtistServiceTest {
         return artist;
     }
 
+    private JsonNode getArtistNode() throws JsonProcessingException {
+
+        return new ObjectMapper().readTree("""
+                {
+                    "id": 100,
+                    "name": "Nickelback",
+                    "profile": "Alternative rock band from Hanna (Canada)."
+                }
+                """);
+    }
 }

@@ -1,5 +1,6 @@
 package com.francofral.artistapi.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.francofral.artistapi.client.ArtistSearchClient;
 import com.francofral.artistapi.domain.Album;
 import com.francofral.artistapi.domain.Artist;
@@ -12,8 +13,10 @@ import com.francofral.artistapi.repository.ArtistRepository;
 import com.francofral.artistapi.service.mapper.AlbumDtoToEntityMapper;
 import com.francofral.artistapi.service.mapper.AlbumEntityToDtoMapper;
 import com.francofral.artistapi.service.mapper.ArtistDtoToEntityMapper;
+import com.francofral.artistapi.service.mapper.JsonMappingStrategy;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,17 +35,30 @@ import java.util.stream.Collectors;
  * This class ensures traceable workflows for album retrieval and persistence.
  */
 @Slf4j
-@AllArgsConstructor
 @Service
 class AlbumService {
 
     private final ArtistSearchClient artistSearchClient;
     private final ArtistRepository artistRepository;
     private final AlbumRepository albumRepository;
+    private final JsonMappingStrategy<JsonNode, List<AlbumDto>> albumsMapper;
     private final AlbumDtoToEntityMapper albumDtoToEntityMapper;
     private final AlbumEntityToDtoMapper albumEntityToDtoMapper;
-    private final ArtistDtoToEntityMapper artistDtoToEntityMapper;
 
+    public AlbumService(ArtistSearchClient artistSearchClient,
+                        ArtistRepository artistRepository,
+                        AlbumRepository albumRepository,
+                        @Qualifier("discogsAlbumsMapper") JsonMappingStrategy<JsonNode, List<AlbumDto>> albumsMapper,
+                        AlbumDtoToEntityMapper albumDtoToEntityMapper,
+                        AlbumEntityToDtoMapper albumEntityToDtoMapper) {
+
+        this.artistSearchClient = artistSearchClient;
+        this.artistRepository = artistRepository;
+        this.albumRepository = albumRepository;
+        this.albumsMapper = albumsMapper;
+        this.albumDtoToEntityMapper = albumDtoToEntityMapper;
+        this.albumEntityToDtoMapper = albumEntityToDtoMapper;
+    }
 
     /**
      * Retrieves albums for the given artist ID. If albums are not found locally, they are fetched
@@ -83,15 +99,16 @@ class AlbumService {
     private List<AlbumDto> fetchAlbumsForArtist(Long artistId) {
         log.info("START - Fetching albums for artist with ID: {} from external service.", artistId);
 
-        AlbumDtoWrapper albumDtoWrapper = artistSearchClient.fetchAlbumsForArtist(artistId)
-                .orElseThrow(() -> {
-                    log.error("ERROR - Albums for artist with ID: {} could not be found in external service.", artistId);
-                    return new ResourceNotFoundException(String.format("Albums for artist with ID=%s couldn't be found", artistId));
-                });
+        JsonNode albumsNode = artistSearchClient.fetchAlbumsForArtist(artistId);
+        List<AlbumDto> albums = albumsMapper.apply(albumsNode);
+        if (albums.isEmpty()) {
+            log.error("ERROR - Albums for artist with ID: {} could not be found in external service.", artistId);
+            throw new ResourceNotFoundException(String.format("Albums for artist with ID=%s couldn't be found", artistId));
+        }
 
-        log.info("SUCCESS - Fetched {} albums for artist with ID: {} from external service.", albumDtoWrapper.albums().size(), artistId);
+        log.info("SUCCESS - Fetched {} albums for artist with ID: {} from external service.", albums.size(), artistId);
 
-        return albumDtoWrapper.albums();
+        return albums;
     }
 
     /**
