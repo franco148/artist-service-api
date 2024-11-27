@@ -11,10 +11,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Pattern.Flag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 @Tag(name = "Artists API", description = "Artists management APIs")
+@Validated
 @AllArgsConstructor
 @RestController
 @RequestMapping("/api/v1/artists")
@@ -52,7 +55,7 @@ public class ArtistRestController {
         )
     })
     @GetMapping("/{artistId}")
-    public ResponseEntity<ArtistDto> findArtistById(@PathVariable("artistId") Long artistId) {
+    public ResponseEntity<ArtistDto> findArtistById(@PathVariable("artistId") @Min(1) Long artistId) {
         ArtistDto artistDto = artistInfoOrchestrationService.retrieveArtistByIdOrCreate(artistId);
         return ResponseEntity.ok(artistDto);
     }
@@ -70,7 +73,7 @@ public class ArtistRestController {
     })
     @GetMapping("/{artistId}/discography")
     public ResponseEntity<List<AlbumDto>> getArtistAlbums(
-            @PathVariable("artistId") Long artistId,
+            @PathVariable("artistId") @Min(1) Long artistId,
             @RequestParam(value = "sortDirection", defaultValue = "ASC") @Pattern(regexp = "ASC|DESC", flags = Flag.CANON_EQ) String sortDirection) {
 
         List<AlbumDto> artistDiscography = artistInfoOrchestrationService.retrieveArtistDiscography(artistId, sortDirection);
@@ -99,7 +102,7 @@ public class ArtistRestController {
         )
     })
     @GetMapping("/compare")
-    public ResponseEntity<Set<ArtistComparisonDto>> getComparativeInformationByArtistIds(@RequestParam("artistId") Set<Long> artistIds) {
+    public ResponseEntity<Set<ArtistComparisonDto>> getComparativeInformationByArtistIds(@RequestParam("artistId") Set<@Min(1) Long> artistIds) {
         Set<ArtistComparisonDto> artistComparisons = artistInfoOrchestrationService.getComparativeInformationByArtistIds(artistIds);
         return ResponseEntity.ok(artistComparisons);
     }
