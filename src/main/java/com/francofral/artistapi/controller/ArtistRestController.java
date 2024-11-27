@@ -1,5 +1,6 @@
 package com.francofral.artistapi.controller;
 
+import com.francofral.artistapi.dto.AlbumDto;
 import com.francofral.artistapi.dto.ArtistComparisonDto;
 import com.francofral.artistapi.dto.ArtistDto;
 import com.francofral.artistapi.problem.ErrorResponse;
@@ -10,6 +11,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Pattern.Flag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Set;
 
 @Tag(name = "Artists API", description = "Artists management APIs")
@@ -52,6 +56,27 @@ public class ArtistRestController {
         ArtistDto artistDto = artistInfoOrchestrationService.retrieveArtistByIdOrCreate(artistId);
         return ResponseEntity.ok(artistDto);
     }
+
+
+    @Operation(
+        summary = "Retrieve artist's discography",
+        description = "Retrieve an artist’s discography sorted by release year."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            content = @Content(schema = @Schema(implementation = AlbumDto.class), mediaType = "application/json")
+        )
+    })
+    @GetMapping("/{artistId}/discography")
+    public ResponseEntity<List<AlbumDto>> getArtistAlbums(
+            @PathVariable("artistId") Long artistId,
+            @RequestParam(value = "sortDirection", defaultValue = "ASC") @Pattern(regexp = "ASC|DESC", flags = Flag.CANON_EQ) String sortDirection) {
+
+        List<AlbumDto> artistDiscography = artistInfoOrchestrationService.retrieveArtistDiscography(artistId, sortDirection);
+        return ResponseEntity.ok(artistDiscography);
+    }
+
 
     @Operation(
         summary = "Find comparisons of the artists.",
