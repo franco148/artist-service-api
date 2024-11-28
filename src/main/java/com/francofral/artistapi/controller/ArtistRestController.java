@@ -55,7 +55,7 @@ public class ArtistRestController {
         )
     })
     @GetMapping("/{artistId}")
-    public ResponseEntity<ArtistDto> findArtistById(@PathVariable("artistId") @Min(1) Long artistId) {
+    public ResponseEntity<ArtistDto> getArtistById(@PathVariable("artistId") @Min(1) Long artistId) {
         ArtistDto artistDto = artistInfoOrchestrationService.retrieveArtistByIdOrCreate(artistId);
         return ResponseEntity.ok(artistDto);
     }
