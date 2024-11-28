@@ -14,6 +14,7 @@ import com.francofral.artistapi.service.mapper.AlbumEntityToDtoMapper;
 import com.francofral.artistapi.service.mapper.ArtistDtoToEntityMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -71,6 +72,28 @@ class AlbumService {
         log.info("SUCCESS - Successfully retrieved and saved {} albums for artist with ID: {}", albumDtoList.size(), artistId);
 
         return albumDtoList;
+    }
+
+    /**
+     * Retrieves the artist discography sorted by releaseYear in ASCENDING or DESCENDING order.
+     *
+     * @param artistId The ID of the artist to retrieve.
+     * @param sortDirection The sort direction which can be ASC or DESC
+     * @return A {@link List} of {@link AlbumDto} objects which represents the artist discography.
+     */
+    public List<AlbumDto> retrieveAlbumsByArtistId(Long artistId, String sortDirection) {
+        log.info("START - Retrieving albums for artist with ID: {} sort direction: {}", artistId, sortDirection);
+
+        Sort.Direction direction = "DESC".equalsIgnoreCase(sortDirection) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Sort sort = Sort.by(direction, "releaseYear");
+
+        List<Album> artistAlbums = albumRepository.findAllByArtistId(artistId, sort);
+
+        log.info("SUCCESS - Found {} albums for artist with ID: {}", artistAlbums.size(), artistId);
+
+        return artistAlbums.stream()
+                .map(albumEntityToDtoMapper)
+                .toList();
     }
 
     /**

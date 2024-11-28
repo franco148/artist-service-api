@@ -56,4 +56,15 @@ public class ArtistInfoOrchestrationService {
     public Set<ArtistComparisonDto> getComparativeInformationByArtistIds(Set<Long> artistIds) {
         return artistRepository.getComparativeInformationByArtistIds(artistIds);
     }
+
+    /**
+     * Retrieves the artist discography sorted by releaseYear in ASCENDING or DESCENDING order.
+     *
+     * @param artistId The ID of the artist to retrieve.
+     * @param sortDirection The sort direction which can be ASC or DESC
+     * @return A {@link List} of {@link AlbumDto} objects which represents the artist discography.
+     */
+    public List<AlbumDto> retrieveArtistDiscography(Long artistId, String sortDirection) {
+        return albumService.retrieveAlbumsByArtistId(artistId, sortDirection);
+    }
 }
