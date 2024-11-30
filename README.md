@@ -79,15 +79,15 @@ about artists and their respective albums can be obtained.
 - Docker compose
 
 ### How to start the system
-- Clone the repository:
+- Clone or download the repository from: https://github.com/franco148/artist-service-api
 ```bash 
   git clone https://github.com/franco148/artist-service-api.git
 ```
-- Go to the root folder of the repository: 
+- Go to the root folder of the repository (First unzip it if necessary): 
 ```bash
   cd artist-service-api
 ```
-- Execute docker compose command:
+- In the root folder, execute docker compose command:
 ```bash
   docker-compose up -d
 ```
