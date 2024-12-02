@@ -1,8 +1,7 @@
 # Artist Service API
 
-This exercise was implemented based on the description in 
-this [document](https://clarahub.notion.site/Backend-Challenge-10611d068efc80719ba8edbfbbfaa241). An 
-attempt was made to cover most of the indicated requirements.
+Build a RESTful API that allows users to search for artists, retrieve their discography, 
+and compare different artists using data from the Discogs API.
 
 ## Table of Contents
 - [About The Project](#about-the-project)
@@ -32,24 +31,7 @@ In this project you can see the use of the following technology stack:
 The exercise involves consuming a third-party API ([Discogs](https://www.discogs.com/)) from which information 
 about artists and their respective albums can be obtained.
 
-> **However!**
-> 
-> Due to the limited time I had I couldn't do much research on the discogs API. I didn't have the 
-> opportunity to see the necessary APIs to obtain information from the artists (obtain several). 
-> In fact I only have a couple of IDs which actually return information executing the next 
-> endpoint: `https://api.discogs.com/artists/{artist_id}`
-> 
-> The IDs that can be used in the requests (if you want to see the interaction with Discogs API) are the following:
-> 
-> | ARTIST ID | ARTIST NAME |
-> |:----------|:------------|
-> | 262221    | The zombies |
-> | 108713    | Nickelback  |
-> | 103906    | Bit Shifter |
-> 
-> Then for testing you can use those IDs in the requests to the endpoint mentioned above.
-> 
-> **Wait! I just realized that now requests with multiple IDs are working. Apparently service drops from time to time.**
+> **Wait! Apparently service drops from time to time.**
 > 
 > By the way, the test data has the following range of identifiers.
 > - **Artists:** from 1000 to 1028
@@ -90,6 +72,10 @@ about artists and their respective albums can be obtained.
         - Most common genres and tags associated with each artist.
     - Use the data stored in the database to perform these comparisons.
 
+
+3. **Retrieve an artist's discography sorted by release year**
+    - Retrieve artist's discography from database
+
 ## Installation
 
 ### Prerequisites
@@ -97,15 +83,15 @@ about artists and their respective albums can be obtained.
 - Docker compose
 
 ### How to start the system
-- Clone the repository:
+- Clone or download the repository from: https://github.com/franco148/artist-service-api
 ```bash 
   git clone https://github.com/franco148/artist-service-api.git
 ```
-- Go to the root folder of the repository: 
+- Go to the root folder of the repository (First unzip it if necessary): 
 ```bash
   cd artist-service-api
 ```
-- Execute docker compose command:
+- In the root folder, execute docker compose command:
 ```bash
   docker-compose up -d
 ```
