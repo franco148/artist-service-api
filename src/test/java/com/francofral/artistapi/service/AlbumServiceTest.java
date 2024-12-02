@@ -207,12 +207,12 @@ class AlbumServiceTest {
                         {
                             "id": 201,
                             "title": "Album 1",
-                            "releaseYear": 1997
+                            "year": 1997
                         },
                         {
                             "id": 202,
                             "title": "Album 2",
-                            "releaseYear": 2011
+                            "year": 2011
                         }
                     ]
                 }

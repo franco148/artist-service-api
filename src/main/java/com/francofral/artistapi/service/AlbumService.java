@@ -21,7 +21,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import static java.util.Objects.nonNull;
 
 /**
  * Service class responsible for managing album data. This includes retrieving albums
@@ -42,17 +47,17 @@ class AlbumService {
     private final ArtistSearchClient artistSearchClient;
     private final ArtistRepository artistRepository;
     private final AlbumRepository albumRepository;
-    private final JsonMappingStrategy<JsonNode, List<AlbumDto>> albumsMapper;
+    private final JsonMappingStrategy<JsonNode, AlbumDto> albumsMapper;
     private final AlbumDtoToEntityMapper albumDtoToEntityMapper;
     private final AlbumEntityToDtoMapper albumEntityToDtoMapper;
+
 
     public AlbumService(ArtistSearchClient artistSearchClient,
                         ArtistRepository artistRepository,
                         AlbumRepository albumRepository,
-                        @Qualifier("discogsAlbumsMapper") JsonMappingStrategy<JsonNode, List<AlbumDto>> albumsMapper,
+                        @Qualifier("discogsAlbumsMapper") JsonMappingStrategy<JsonNode, AlbumDto> albumsMapper,
                         AlbumDtoToEntityMapper albumDtoToEntityMapper,
                         AlbumEntityToDtoMapper albumEntityToDtoMapper) {
-
         this.artistSearchClient = artistSearchClient;
         this.artistRepository = artistRepository;
         this.albumRepository = albumRepository;
@@ -123,15 +128,28 @@ class AlbumService {
         log.info("START - Fetching albums for artist with ID: {} from external service.", artistId);
 
         JsonNode albumsNode = artistSearchClient.fetchAlbumsForArtist(artistId);
-        List<AlbumDto> albums = albumsMapper.apply(albumsNode);
-        if (albums.isEmpty()) {
-            log.error("ERROR - Albums for artist with ID: {} could not be found in external service.", artistId);
-            throw new ResourceNotFoundException(String.format("Albums for artist with ID=%s couldn't be found", artistId));
-        }
+        List<AlbumDto> albums = Optional.ofNullable(albumsNode)
+                .filter(isNotNullOrEmpty().and(hasReleases()))
+                .map(node -> node.get("releases")) // Getting the "releases" array
+                .map(releases -> StreamSupport.stream(releases.spliterator(), false) // Stream over the releases
+                    .map(albumsMapper)
+                    .toList()
+                ).orElseThrow(() -> {
+                    log.error("ERROR - Albums for artist with ID: {} could not be found in external service.", artistId);
+                    return new ResourceNotFoundException(String.format("Albums for artist with ID=%s couldn't be found", artistId));
+                });
 
         log.info("SUCCESS - Fetched {} albums for artist with ID: {} from external service.", albums.size(), artistId);
 
         return albums;
+    }
+
+    private Predicate<JsonNode> isNotNullOrEmpty() {
+        return node -> nonNull(node) && !node.isEmpty();
+    }
+
+    private Predicate<JsonNode> hasReleases() {
+        return node -> node.has("releases") && node.get("releases").isArray();
     }
 
     /**

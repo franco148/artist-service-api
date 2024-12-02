@@ -3,6 +3,7 @@ package com.francofral.artistapi.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.francofral.artistapi.client.ArtistSearchClient;
 import com.francofral.artistapi.domain.Artist;
 import com.francofral.artistapi.dto.ArtistDto;
@@ -103,7 +104,7 @@ class ArtistServiceTest {
     void throwsExceptionWhenResourceIsNotFound() {
         // GIVEN
         given(artistRepository.findById(anyLong())).willReturn(Optional.empty());
-        given(artistSearchClient.fetchArtistById(anyLong())).willReturn(null);
+        given(artistSearchClient.fetchArtistById(anyLong())).willReturn(JsonNodeFactory.instance.objectNode());
 
         // WHEN
         RuntimeException thrownException = assertThrows(
@@ -138,7 +139,7 @@ class ArtistServiceTest {
                 {
                     "id": 100,
                     "name": "Nickelback",
-                    "profile": "Alternative rock band from Hanna (Canada)."
+                    "profile": "Alternative rock band from Hanna, Alberta (Canada)."
                 }
                 """);
     }

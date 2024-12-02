@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -83,9 +84,9 @@ class ArtistService {
         log.info("START - Fetching artist with ID: {} from external service.", artistId);
 
         JsonNode artistNode = artistSearchClient.fetchArtistById(artistId);
-        ArtistDto artistDto = Stream.of(artistNode)
+        ArtistDto artistDto = Optional.ofNullable(artistNode)
+                .filter(node -> !node.isNull() && !node.isEmpty())
                 .map(artistMapper)
-                .findFirst()
                 .orElseThrow(() -> {
                     log.error("ERROR - Artist with ID: {} not found in external service.", artistId);
                     return new ResourceNotFoundException(String.format("Artist with ID=%s couldn't be found", artistId));
