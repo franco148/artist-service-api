@@ -144,14 +144,6 @@ class AlbumService {
         return albums;
     }
 
-    private Predicate<JsonNode> isNotNullOrEmpty() {
-        return node -> nonNull(node) && !node.isEmpty();
-    }
-
-    private Predicate<JsonNode> hasReleases() {
-        return node -> node.has("releases") && node.get("releases").isArray();
-    }
-
     /**
      * Saves a list of albums to the database for the specified artist.
      *
@@ -176,5 +168,13 @@ class AlbumService {
         albumRepository.saveAll(albums);
 
         log.info("SUCCESS - Successfully saved {} albums for artist with ID: {}", albums.size(), artistId);
+    }
+
+    private Predicate<JsonNode> isNotNullOrEmpty() {
+        return node -> nonNull(node) && !node.isEmpty();
+    }
+
+    private Predicate<JsonNode> hasReleases() {
+        return node -> node.has("releases") && node.get("releases").isArray();
     }
 }
