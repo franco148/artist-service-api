@@ -72,6 +72,10 @@ about artists and their respective albums can be obtained.
         - Most common genres and tags associated with each artist.
     - Use the data stored in the database to perform these comparisons.
 
+
+3. **Retrieve an artist's discography sorted by release year**
+    - Retrieve artist's discography from database
+
 ## Installation
 
 ### Prerequisites
